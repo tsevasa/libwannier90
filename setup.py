@@ -53,7 +53,7 @@ ext_modules = [
         include_dirs=['wannier90-3.1.0', '/opt/homebrew/opt/lapack/include', 'pybind11/include'],
         library_dirs=['/opt/homebrew/opt/lapack/lib', 'wannier90-3.1.0'],
         libraries=['lapack', 'blas', 'wannier'],
-        extra_compile_args=['-O3', '-Wall', '-shared', '-std=c++11', '-fPIC', '-D_UF', '-undefined', 'dynamic_lookup'],
+        extra_compile_args=['-O3', '-Wall', '-shared', '-std=c++11', '-fPIC', '-D_UF'],
         extra_link_args=['-Wl,-rpath,wannier90-3.1.0'],
         language='c++'
     )
@@ -78,7 +78,7 @@ setup(
     classifiers=[
         'Programming Language :: Python :: 3',
         'Programming Language :: C++',
-        'License :: OSI Approved :: GNU License',
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
         'Operating System :: OS Independent',
     ],
     cmdclass={
