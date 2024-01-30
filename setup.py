@@ -14,8 +14,18 @@ else:
 class CustomBuildExtCommand(build_ext):
     """Custom build command."""
 
+    def check_and_install_package(self, package):
+        try:
+            subprocess.check_call(['brew', 'list', package])
+        except subprocess.CalledProcessError:
+            print(f"{package} not found. Installing via Homebrew...")
+            subprocess.check_call(['brew', 'install', package])
+
     def run(self):
-        # Compile wannier90-3.1.0 first
+        # Check and install BLAS and LAPACK if not present
+        self.check_and_install_package('lapack')
+
+        # Compile wannier90-3.1.0
         print("Compiling wannier90-3.1.0")
         original_dir = os.getcwd()  # Save the current directory
         try:
@@ -40,7 +50,7 @@ ext_modules = [
     Extension(
         'libwannier90',
         sources=['src/libwannier90.cpp'],
-        include_dirs=['wannier90-3.1.0', '/opt/homebrew/opt/lapack/include', 'pybind11/include'],  # Adjust include paths as needed
+        include_dirs=['wannier90-3.1.0', '/opt/homebrew/opt/lapack/include', 'pybind11/include'],
         library_dirs=['/opt/homebrew/opt/lapack/lib', 'wannier90-3.1.0'],
         libraries=['lapack', 'blas', 'wannier'],
         extra_compile_args=['-O3', '-Wall', '-shared', '-std=c++11', '-fPIC', '-D_UF', '-undefined', 'dynamic_lookup'],
@@ -53,9 +63,9 @@ ext_modules = [
 setup(
     name='libwannier90',
     version='0.1.0',
-    author='Your Name',
-    author_email='your.email@example.com',
-    url='https://github.com/yourusername/libwannier90',
+    author='Hung Q. Pham',
+    author_email='pqh3.14@gmail.com',
+    url='https://github.com/hungpham2017/libwannier90',
     description='Wannier90 library for python wrapper pyWannier90',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
