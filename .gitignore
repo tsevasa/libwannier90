@@ -1,0 +1,42 @@
+# System files
+.DS_Store
+
+# License file
+LICENSE
+
+# Build artifacts
+build/
+libwannier90.egg-info/
+
+# Source and setup script
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+.Python
+env/
+venv/
+pyvenv.cfg
+Pipfile.*
+poetry.lock
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pytest
+.cache
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo

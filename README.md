@@ -1,2 +1,6 @@
-# libwannier90
-repo for the libwannier90 library to be used with pyWannier90
+## Intro
+Python Wannier90 library for to be used with the pyWannier90 wrapper.
+
+## Supported electronic structure codes
+- PySCF
+- VASP
