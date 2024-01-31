@@ -4,12 +4,13 @@ import subprocess
 import sys
 import os
 
-# Determine the extension suffix
-if sys.platform == "darwin":
-    ext_suffix = '.cpython-' + ''.join(map(str, sys.version_info[0:2])) + '-darwin.so'
-else:
-    # Add other platform-specific suffixes if necessary
-    ext_suffix = '.so'
+# Check if PyBind11 is installed
+try:
+    import pybind11
+except ImportError:
+    print("PyBind11 is not installed. Installing...")
+    subprocess.check_call(['pip', 'install', 'pybind11'])
+    import pybind11
 
 class CustomBuildExtCommand(build_ext):
     """Custom build command."""
@@ -50,7 +51,7 @@ ext_modules = [
     Extension(
         'libwannier90',
         sources=['src/libwannier90.cpp'],
-        include_dirs=['wannier90-3.1.0', '/opt/homebrew/opt/lapack/include', 'pybind11/include'],
+        include_dirs=['wannier90-3.1.0', '/opt/homebrew/opt/lapack/include', pybind11.get_include()],
         library_dirs=['/opt/homebrew/opt/lapack/lib', 'wannier90-3.1.0'],
         libraries=['lapack', 'blas', 'wannier'],
         extra_compile_args=['-O3', '-Wall', '-shared', '-std=c++11', '-fPIC', '-D_UF'],
@@ -62,14 +63,14 @@ ext_modules = [
 # Setup configuration
 setup(
     name='libwannier90',
-    version='0.1.0',
+    version='0.2.0',
     author='Hung Q. Pham',
     author_email='pqh3.14@gmail.com',
     url='https://github.com/hungpham2017/libwannier90',
     description='Wannier90 library for python wrapper pyWannier90',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    license='MIT',
+    license='GPLv2',
     packages=find_packages(),
     install_requires=[
         'pybind11>=2.6.0'
