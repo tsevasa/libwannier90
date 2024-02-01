@@ -7,7 +7,7 @@ F90 = gfortran
 #COMMS  = mpi
 #MPIF90 = mpgfortran #mpif90
 
-FCOPTS = -O3
+FCOPTS = -O3 -fPIC
 LDOPTS =
 
 #Next two lines are good for debugging
