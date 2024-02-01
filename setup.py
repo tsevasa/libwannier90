@@ -10,37 +10,13 @@ try:
     import pybind11
 except ImportError:
     print("PyBind11 is not installed. Installing...")
-<<<<<<< HEAD
-    subprocess.check_call(['pip', 'install', 'pybind11'])
-=======
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pybind11'])
->>>>>>> v-3.1.0-macosx
     import pybind11
 
 class CustomBuildExtCommand(build_ext):
     """Custom build command."""
 
-<<<<<<< HEAD
-    def check_and_install_package(self, package):
-        try:
-            # Use your package manager (e.g., apt-get) to check if the package is installed
-            subprocess.check_call(['dpkg', '-l', package])
-        except subprocess.CalledProcessError:
-            print(f"{package} not found. Installing via your package manager...")
-            # Use your package manager (e.g., apt-get) to install the package
-            subprocess.check_call(['sudo', 'apt-get', 'install', '-y', package])
-
-    def run(self):
-        # Check and install BLAS and LAPACK if not present
-        self.check_and_install_package('liblapack-dev')  # Install LAPACK development package
-        self.check_and_install_package('libblas-dev')    # Install BLAS development package
-
-        # Compile wannier90-3.1.0
-        print("Compiling wannier90-3.1.0")
-        original_dir = os.getcwd()  # Save the current directory
-=======
     def check_and_install_package_linux(self, package):
->>>>>>> v-3.1.0-macosx
         try:
             subprocess.check_call(['dpkg', '-l', package])
         except subprocess.CalledProcessError:
@@ -82,13 +58,8 @@ ext_modules = [
     Extension(
         'libwannier90',
         sources=['src/libwannier90.cpp'],
-<<<<<<< HEAD
-        include_dirs=['wannier90-3.1.0', '/usr/include', pybind11.get_include()],
-        library_dirs=['/usr/lib/x86_64-linux-gnu', 'wannier90-3.1.0'],
-=======
         include_dirs=['wannier90-3.1.0', pybind11.get_include()],
         library_dirs=['wannier90-3.1.0'],
->>>>>>> v-3.1.0-macosx
         libraries=['lapack', 'blas', 'wannier'],
         extra_compile_args=['-O3', '-Wall', '-shared', '-std=c++11', '-fPIC', '-D_UF'],
         extra_link_args=['-Wl,-rpath,wannier90-3.1.0'],
@@ -108,11 +79,7 @@ elif platform.system() == 'Darwin':
 # Setup configuration
 setup(
     name='libwannier90',
-<<<<<<< HEAD
-    version='0.2.0',
-=======
     version='0.2.1',
->>>>>>> v-3.1.0-macosx
     author='Hung Q. Pham',
     author_email='pqh3.14@gmail.com',
     url='https://github.com/hungpham2017/libwannier90',
