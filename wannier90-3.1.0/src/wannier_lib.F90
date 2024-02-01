@@ -8,13 +8,11 @@
 !                                                            !
 ! Please cite                                                !
 !                                                            !
-! [ref] A. A. Mostofi, J. R. Yates, G. Pizzi, Y.-S. Lee,     !
-!       I. Souza, D. Vanderbilt and N. Marzari,              !
-!       "An updated version of Wannier90: a tool             !
-!       for obtaining maximally-localised Wannier            !
-!       functions",                                          !
-!       Computer Physics Communications 185, 2309 (2014),    !
-!       http://dx.doi.org/10.1016/j.cpc.2014.05.003          !
+!  [ref] "Wannier90 as a community code:                     !
+!        new features and applications",                     !
+!        G. Pizzi et al.,  J. Phys. Cond. Matt. 32,          !
+!        165902 (2020).                                      !
+!        http://doi.org/10.1088/1361-648X/ab51ff             !
 !                                                            !
 ! in any publications arising from the use of this code.     !
 !                                                            !
@@ -50,58 +48,10 @@
 !                                                            !
 ! https://github.com/wannier-developers/wannier90            !
 !------------------------------------------------------------!
-module w90lib
-!Modified to be used as library for a python environment
-!Hung Q. Pham
-!email: pqh3.14@gmail.com
-contains
 
-
-subroutine pass_boolean(bl_in, bl_out)
-		!to pass a boolean varible to fortran using an integer
-		implicit none
-		integer, intent(in) :: bl_in
-		logical :: bl_out
-
-		if (bl_in .eq. 1) then
-			bl_out = .true.
-		else
-			bl_out = .false.
-		end if 
-end subroutine pass_boolean
-	
-subroutine element_dict(atom_atomic_loc, element_Z, element_sym)	
-		!Passing atomic number instead of element symmbol
-		implicit none
-		integer, intent(in) :: atom_atomic_loc
-		integer :: i
-		integer, dimension(1:atom_atomic_loc), intent(in) 			:: element_Z
-		character(len=2), dimension(1:atom_atomic_loc), intent(out) 	:: element_sym	
-		character(len=2), dimension(1:118)				:: element_list		
-		
-		element_list = (/'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne', 'Na', 'Mg', 'Al', &
-						'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca', 'Sc', 'Ti', 'V ', 'Cr', 'Mn', 'Fe', &
-						'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y ', &
-						'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', &
-						'I ', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', &
-						'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W ', 'Re', 'Os', 'Ir', 'Pt', &
-						'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', &
-						'U ', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', &
-						'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og'/)
-						
-		do i = 1, atom_atomic_loc
-			if (element_Z(i) <= 118) then
-				element_sym(i) = element_list(element_Z(i))
-			else
-				write (*,*) "Wrong atomic numer for atom ", element_Z(i)
-			end if
-		end do
-		
-end subroutine element_dict
-	
-subroutine wannier_setup(mp_grid_loc, num_kpts_loc, &
+subroutine wannier_setup(seed__name, mp_grid_loc, num_kpts_loc, &
                          real_lattice_loc, recip_lattice_loc, kpt_latt_loc, num_bands_tot, &
-                         num_atoms_loc, atom_atomic_loc, atoms_cart_loc, gamma_only_boolean, spinors_boolean, &
+                         num_atoms_loc, atom_symbols_loc, atoms_cart_loc, gamma_only_loc, spinors_loc, &
                          nntot_loc, nnlist_loc, nncell_loc, num_bands_loc, num_wann_loc, &
                          proj_site_loc, proj_l_loc, proj_m_loc, proj_radial_loc, proj_z_loc, &
                          proj_x_loc, proj_zona_loc, exclude_bands_loc, proj_s_loc, proj_s_qaxis_loc)
@@ -122,6 +72,7 @@ subroutine wannier_setup(mp_grid_loc, num_kpts_loc, &
 
   implicit none
 
+  character(len=*), intent(in) :: seed__name
   integer, dimension(3), intent(in) :: mp_grid_loc
   integer, intent(in) :: num_kpts_loc
   real(kind=dp), dimension(3, 3), intent(in) :: real_lattice_loc
@@ -129,13 +80,10 @@ subroutine wannier_setup(mp_grid_loc, num_kpts_loc, &
   real(kind=dp), dimension(3, num_kpts_loc), intent(in) :: kpt_latt_loc
   integer, intent(in) :: num_bands_tot
   integer, intent(in) :: num_atoms_loc
-  integer, dimension(num_atoms_loc), intent(in) 		 :: atom_atomic_loc !will be converted to the atom_symbols_loc
-  character(len=2), dimension(num_atoms_loc)			 :: atom_symbols_loc
+  character(len=*), dimension(num_atoms_loc), intent(in) :: atom_symbols_loc
   real(kind=dp), dimension(3, num_atoms_loc), intent(in) :: atoms_cart_loc
-  integer, intent(in) :: gamma_only_boolean
-  integer, intent(in) :: spinors_boolean  
-  logical             :: gamma_only_loc
-  logical             :: spinors_loc
+  logical, intent(in) :: gamma_only_loc
+  logical, intent(in) :: spinors_loc
   integer, intent(out) :: nntot_loc
   integer, dimension(num_kpts_loc, num_nnmax), intent(out) :: nnlist_loc
   integer, dimension(3, num_kpts_loc, num_nnmax), intent(out) :: nncell_loc
@@ -156,20 +104,14 @@ subroutine wannier_setup(mp_grid_loc, num_kpts_loc, &
   character(len=9) :: stat, pos, cdate, ctime
   integer :: ierr
   logical :: wout_found
-  
-  !HP-----------------------------------------------------------------
-  call element_dict(num_atoms_loc, atom_atomic_loc, atom_symbols_loc)
-  call pass_boolean(gamma_only_boolean, gamma_only_loc)
-  call pass_boolean(spinors_boolean, spinors_loc)  
-  !HP-----------------------------------------------------------------
-  
+
   time0 = io_time()
 
   call comms_setup_vars
 
   library = .true.
 !  seedname="wannier"
-  seedname = trim(adjustl('wannier90'))
+  seedname = trim(adjustl(seed__name))
   inquire (file=trim(seedname)//'.wout', exist=wout_found)
   if (wout_found) then
     stat = 'old'
@@ -183,7 +125,7 @@ subroutine wannier_setup(mp_grid_loc, num_kpts_loc, &
 
   call param_write_header()
 
-  write (stdout, '(/a/)') ' Wannier90 is running in LIBRARY MODE via pyWannier90'
+  write (stdout, '(/a/)') ' Wannier90 is running in LIBRARY MODE'
   write (stdout, '(a/)') ' Setting up k-point neighbours...'
 
   ! copy local data into module variables
@@ -274,17 +216,19 @@ subroutine wannier_setup(mp_grid_loc, num_kpts_loc, &
 
 end subroutine wannier_setup
 
-subroutine wannier_run(mp_grid_loc, num_kpts_loc, &
+subroutine wannier_run(seed__name, mp_grid_loc, num_kpts_loc, &
                        real_lattice_loc, recip_lattice_loc, kpt_latt_loc, num_bands_loc, &
-                       num_wann_loc, nntot_loc, num_atoms_loc, atom_atomic_loc, &
-                       atoms_cart_loc, gamma_only_boolean, M_matrix_loc, A_matrix_loc, eigenvalues_loc, &
+                       num_wann_loc, nntot_loc, num_atoms_loc, atom_symbols_loc, &
+                       atoms_cart_loc, gamma_only_loc, M_matrix_loc, A_matrix_loc, eigenvalues_loc, &
                        U_matrix_loc, U_matrix_opt_loc, lwindow_loc, wann_centres_loc, &
                        wann_spreads_loc, spread_loc)
 
   !! This routine should be called after wannier_setup from a code calling
   !! the library mode to actually run the Wannier code.
-  !! NOTE! The library mode currently works ONLY in serial (when called from
-  !! a parallel code, make sure to run it only on 1 MPI process)
+  !!
+  !! NOTE! The library mode currently works ONLY in serial.
+  !! When called from an external code, wannier90 needs to be compiled
+  !! in sequential and wannier_run called with 1 MPI process.
   !!
   !! For more information, check a (minimal) example of how it can be used
   !! in the folder test-suite/library-mode-test/test_library.F90
@@ -304,6 +248,7 @@ subroutine wannier_run(mp_grid_loc, num_kpts_loc, &
 
   implicit none
 
+  character(len=*), intent(in) :: seed__name
   integer, dimension(3), intent(in) :: mp_grid_loc
   integer, intent(in) :: num_kpts_loc
   real(kind=dp), dimension(3, 3), intent(in) :: real_lattice_loc
@@ -313,11 +258,9 @@ subroutine wannier_run(mp_grid_loc, num_kpts_loc, &
   integer, intent(in) :: num_wann_loc
   integer, intent(in) :: nntot_loc
   integer, intent(in) :: num_atoms_loc
-  integer, dimension(num_atoms_loc), intent(in) 		:: atom_atomic_loc !will be converted to the atom_symbols_loc 
-  character(len=2), dimension(num_atoms_loc)			:: atom_symbols_loc
+  character(len=*), dimension(num_atoms_loc), intent(in) :: atom_symbols_loc
   real(kind=dp), dimension(3, num_atoms_loc), intent(in) :: atoms_cart_loc
-  integer, intent(in) :: gamma_only_boolean
-  logical             :: gamma_only_loc
+  logical, intent(in) :: gamma_only_loc
   complex(kind=dp), dimension(num_bands_loc, num_bands_loc, nntot_loc, num_kpts_loc), intent(in) :: M_matrix_loc
   complex(kind=dp), dimension(num_bands_loc, num_wann_loc, num_kpts_loc), intent(in) :: A_matrix_loc
   real(kind=dp), dimension(num_bands_loc, num_kpts_loc), intent(in) :: eigenvalues_loc
@@ -339,16 +282,11 @@ subroutine wannier_run(mp_grid_loc, num_kpts_loc, &
   integer, dimension(0:num_nodes - 1) :: counts
   integer, dimension(0:num_nodes - 1) :: displs
 
-  !HP-----------------------------------------------------------------
-  call element_dict(num_atoms_loc, atom_atomic_loc, atom_symbols_loc)
-  call pass_boolean(gamma_only_boolean, gamma_only_loc)
-  !HP-----------------------------------------------------------------
-  
   time0 = io_time()
 
   library = .true.
 !  seedname="wannier"
-  seedname = trim(adjustl('wannier90'))
+  seedname = trim(adjustl(seed__name))
   inquire (file=trim(seedname)//'.wout', exist=wout_found)
   if (wout_found) then
     stat = 'old'
@@ -382,7 +320,7 @@ subroutine wannier_run(mp_grid_loc, num_kpts_loc, &
   gamma_only = gamma_only_loc
 
   call param_lib_set_atoms(atom_symbols_loc, atoms_cart_loc)
-  
+
   call param_read()
 
   call param_write()
@@ -502,4 +440,3 @@ subroutine wannier_run(mp_grid_loc, num_kpts_loc, &
   close (stdout)
 
 end subroutine wannier_run
-end module w90lib

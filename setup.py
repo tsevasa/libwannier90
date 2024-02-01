@@ -3,19 +3,27 @@ from setuptools.command.build_ext import build_ext
 import subprocess
 import sys
 import os
+import platform
 
 # Check if PyBind11 is installed
 try:
     import pybind11
 except ImportError:
     print("PyBind11 is not installed. Installing...")
-    subprocess.check_call(['pip', 'install', 'pybind11'])
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pybind11'])
     import pybind11
 
 class CustomBuildExtCommand(build_ext):
     """Custom build command."""
 
-    def check_and_install_package(self, package):
+    def check_and_install_package_linux(self, package):
+        try:
+            subprocess.check_call(['dpkg', '-l', package])
+        except subprocess.CalledProcessError:
+            print(f"{package} not found. Installing via apt-get...")
+            subprocess.check_call(['sudo', 'apt-get', 'install', '-y', package])
+
+    def check_and_install_package_macos(self, package):
         try:
             subprocess.check_call(['brew', 'list', package])
         except subprocess.CalledProcessError:
@@ -23,27 +31,26 @@ class CustomBuildExtCommand(build_ext):
             subprocess.check_call(['brew', 'install', package])
 
     def run(self):
-        # Check and install BLAS and LAPACK if not present
-        self.check_and_install_package('lapack')
+        if platform.system() == 'Linux':
+            self.check_and_install_package_linux('liblapack-dev')
+            self.check_and_install_package_linux('libblas-dev')
+
+        elif platform.system() == 'Darwin':
+            self.check_and_install_package_macos('lapack')
 
         # Compile wannier90-3.1.0
         print("Compiling wannier90-3.1.0")
-        original_dir = os.getcwd()  # Save the current directory
+        original_dir = os.getcwd()
         try:
-            # Change to the wannier90-3.1.0 directory
             os.chdir('./wannier90-3.1.0')
-
-            # Run 'make all' and 'make lib'
             subprocess.check_call(['make', 'all'])
             subprocess.check_call(['make', 'lib'])
         except subprocess.CalledProcessError as e:
             print(f"Error occurred while compiling wannier90-3.1.0: {e}")
             sys.exit(1)
         finally:
-            # Change back to the original directory
             os.chdir(original_dir)
 
-        # Call original build_ext command
         build_ext.run(self)
 
 # Extension definition
@@ -51,8 +58,8 @@ ext_modules = [
     Extension(
         'libwannier90',
         sources=['src/libwannier90.cpp'],
-        include_dirs=['wannier90-3.1.0', '/opt/homebrew/opt/lapack/include', pybind11.get_include()],
-        library_dirs=['/opt/homebrew/opt/lapack/lib', 'wannier90-3.1.0'],
+        include_dirs=['wannier90-3.1.0', pybind11.get_include()],
+        library_dirs=['wannier90-3.1.0'],
         libraries=['lapack', 'blas', 'wannier'],
         extra_compile_args=['-O3', '-Wall', '-shared', '-std=c++11', '-fPIC', '-D_UF'],
         extra_link_args=['-Wl,-rpath,wannier90-3.1.0'],
@@ -60,10 +67,19 @@ ext_modules = [
     )
 ]
 
+if platform.system() == 'Linux':
+    ext_modules[0].include_dirs.append('/usr/include')
+    ext_modules[0].library_dirs.append('/usr/lib/x86_64-linux-gnu')
+    ext_modules[0].library_dirs.append('/usr/lib/x86_64-linux-gnu/lapack')
+    ext_modules[0].library_dirs.append('/usr/lib/x86_64-linux-gnu/blas')
+elif platform.system() == 'Darwin':
+    ext_modules[0].include_dirs.append('/opt/homebrew/opt/lapack/include')
+    ext_modules[0].library_dirs.append('/opt/homebrew/opt/lapack/lib')
+
 # Setup configuration
 setup(
     name='libwannier90',
-    version='0.2.0',
+    version='0.2.1',
     author='Hung Q. Pham',
     author_email='pqh3.14@gmail.com',
     url='https://github.com/hungpham2017/libwannier90',
