@@ -1,14 +1,9 @@
 # System files
 .DS_Store
 
-# License file
-LICENSE
-
 # Build artifacts
 build/
 libwannier90.egg-info/
-
-# Source and setup script
 
 # Python cache files
 __pycache__/
