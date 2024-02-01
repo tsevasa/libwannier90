@@ -70,8 +70,6 @@ ext_modules = [
 if platform.system() == 'Linux':
     ext_modules[0].include_dirs.append('/usr/include')
     ext_modules[0].library_dirs.append('/usr/lib/x86_64-linux-gnu')
-    ext_modules[0].library_dirs.append('/usr/lib/x86_64-linux-gnu/lapack')
-    ext_modules[0].library_dirs.append('/usr/lib/x86_64-linux-gnu/blas')
 elif platform.system() == 'Darwin':
     ext_modules[0].include_dirs.append('/opt/homebrew/opt/lapack/include')
     ext_modules[0].library_dirs.append('/opt/homebrew/opt/lapack/lib')
