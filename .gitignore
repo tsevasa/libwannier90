@@ -1,6 +1,3 @@
-# System files
-.DS_Store
-
 # Build artifacts
 build/
 libwannier90.egg-info/
